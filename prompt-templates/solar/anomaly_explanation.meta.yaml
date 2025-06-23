@@ -1,0 +1,62 @@
+name: anomaly_explanation
+description: "Analyze solar power readings and weather data to explain anomalies"
+version: "1.0.0"
+author: "Solar Agent Team"
+
+variables:
+  readings:
+    type: "list"
+    description: "Historical solar power readings with timestamp, power_kw, status"
+    required: true
+    example: |
+      [
+        {
+          "timestamp": "2024-01-15T10:00:00Z",
+          "power_kw": 5.2,
+          "status": "normal"
+        }
+      ]
+  
+  weather:
+    type: "object"
+    description: "Current weather conditions including temperature, conditions, etc."
+    required: true
+    example: |
+      {
+        "temperature": 25.5,
+        "conditions": "sunny",
+        "cloud_cover": 0.1,
+        "wind_speed": 5.2
+      }
+
+output_schema:
+  type: "object"
+  properties:
+    causes:
+      type: "array"
+      items:
+        type: "string"
+      description: "List of potential causes for the anomaly"
+    
+    severity:
+      type: "string"
+      enum: ["low", "medium", "high", "critical"]
+      description: "Severity level of the anomaly"
+    
+    recommendations:
+      type: "array"
+      items:
+        type: "string"
+      description: "List of recommended actions to address the anomaly"
+    
+    explanation:
+      type: "string"
+      description: "Detailed explanation of what likely caused the anomaly"
+  
+  required: ["causes", "severity", "recommendations", "explanation"]
+
+usage_notes:
+  - "This prompt is used by the LangGraph anomaly analysis flow"
+  - "Response must be valid JSON matching the output schema"
+  - "Consider weather conditions, time patterns, and historical data"
+  - "Provide actionable recommendations for operators" 

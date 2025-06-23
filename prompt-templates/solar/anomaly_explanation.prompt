@@ -1,0 +1,27 @@
+You are an expert solar power system analyst. Analyze the following solar power readings and weather data to explain any anomalies detected.
+
+## Solar Power Readings
+{{ readings }}
+
+## Weather Conditions
+{{ weather }}
+
+## Task
+Based on the readings and weather data above, provide a detailed analysis of any anomalies detected. Your response should be in JSON format with the following structure:
+
+{
+  "causes": ["list of potential causes for the anomaly"],
+  "severity": "low|medium|high|critical",
+  "recommendations": ["list of recommended actions to address the anomaly"],
+  "explanation": "detailed explanation of what likely caused the anomaly"
+}
+
+## Guidelines
+- Consider weather conditions, time of day, and historical patterns
+- Assess the severity based on deviation magnitude and potential impact
+- Provide actionable recommendations
+- Be specific about likely causes
+- Use technical but understandable language
+
+## Response Format
+Return only valid JSON with the specified structure. Do not include any additional text or explanations outside the JSON. 

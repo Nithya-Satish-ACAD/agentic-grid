@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  solar-agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SITE_ID=solar-site-001
+      - AGENT_ID=solar-agent-001
+      - UTILITY_URL=http://utility-stub:8001
+      - WEATHER_MCP_URL=http://weather-mcp:8002
+      - API_KEY_SOLAR=dev-api-key
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - FORECAST_INTERVAL=300
+      - ANOMALY_THRESHOLD=0.15
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    depends_on:
+      - weather-mcp
+      - utility-stub
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  weather-mcp:
+    image: sjanax01/weather-mcp-server:latest
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  utility-stub:
+    image: nginx:alpine
+    ports:
+      - "8001:80"
+    volumes:
+      - ./utility-stub.conf:/etc/nginx/conf.d/default.conf
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: solar-agent-network 
