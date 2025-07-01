@@ -1,6 +1,92 @@
 # Solar Agent
 
-A production-grade Solar Agent backend system for distributed multi-agent energy grid management. This system provides intelligent solar panel monitoring, forecasting, and curtailment capabilities using LangGraph workflow orchestration and FastAPI.
+A modular, production-ready backend for distributed solar energy management, designed for standalone operation or integration into a multi-agent grid (with Utility, Battery, Load agents, etc).
+
+---
+
+## Features
+
+- **Modular Hardware Adapters:** Easily extend to new inverter/solar hardware.
+- **LLM-Agnostic:** Supports OpenAI, Gemini, and local LLMs via Ollama.
+- **LangGraph Workflows:** Flexible, human-in-the-loop, and fault-tolerant agent logic.
+- **REST API:** FastAPI-based endpoints for control, monitoring, and integration.
+- **Production-Ready:** Designed for Kubernetes, scalable messaging, and robust observability.
+
+---
+
+## Project Structure
+
+```
+src/solar_agent/
+  adapters/      # Hardware abstraction (Sunspec, mock, etc)
+  api/           # FastAPI endpoints and models
+  core/          # Config, exceptions, core models
+  llm/           # LLM provider interfaces (OpenAI, Gemini, Ollama)
+  tools/         # Data generation, forecasting, MCP client
+  workflow/      # LangGraph workflows, nodes, state
+```
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Nithya-Satish-ACAD/agentic-grid.git
+cd agentic-grid
+git checkout solar-agent
+```
+
+### 2. Setup Environment
+
+- Copy and edit environment variables:
+  ```bash
+  cp env.template .env
+  ```
+- Install dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### 3. Run Locally
+
+```bash
+python main.py
+```
+
+Or with Docker:
+
+```bash
+docker-compose up --build
+```
+
+---
+
+## API Usage
+
+- REST endpoints documented via FastAPI at `/docs` when running.
+- Example: `POST /api/solar/command` to send a control command.
+
+---
+
+## Contributing
+
+- Use feature branches off `solar-agent`.
+- Ensure all code is linted and tested (`run_tests.py`).
+- Open a Pull Request for review.
+
+---
+
+## License
+
+MIT
+
+---
+
+## Acknowledgements
+
+- Built with [LangGraph](https://github.com/langchain-ai/langgraph), [FastAPI](https://fastapi.tiangolo.com/), and [Ollama](https://ollama.com/).
 
 ## 🚀 Features
 
