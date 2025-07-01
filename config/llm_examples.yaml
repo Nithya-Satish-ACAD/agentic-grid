@@ -1,0 +1,164 @@
+# Solar Agent LLM Configuration Examples
+# Simplified to support 3 essential providers: OpenAI, Gemini, and Ollama
+
+# =============================================================================
+# OpenAI Configuration Examples
+# =============================================================================
+
+openai_examples:
+  # Standard OpenAI API (Recommended for production)
+  basic:
+    provider: "openai"
+    model: "gpt-4o-mini"
+    api_key: "${OPENAI_API_KEY}"
+    temperature: 0.1
+    max_tokens: 1000
+    timeout: 30
+
+  # High-performance with GPT-4
+  advanced:
+    provider: "openai" 
+    model: "gpt-4o"
+    api_key: "${OPENAI_API_KEY}"
+    temperature: 0.05
+    max_tokens: 2000
+    timeout: 60
+
+  # Azure OpenAI
+  azure:
+    provider: "openai"
+    model: "gpt-4"
+    api_key: "${AZURE_OPENAI_API_KEY}"
+    api_base: "https://your-instance.openai.azure.com"
+    temperature: 0.1
+    max_tokens: 1000
+
+# =============================================================================
+# Google Gemini Configuration Examples
+# =============================================================================
+
+gemini_examples:
+  # Fast and cost-effective (Recommended for cost optimization)
+  flash:
+    provider: "gemini"
+    model: "gemini-1.5-flash"
+    api_key: "${GEMINI_API_KEY}"
+    temperature: 0.1
+    max_tokens: 1000
+
+  # High performance
+  pro:
+    provider: "gemini"
+    model: "gemini-1.5-pro"
+    api_key: "${GEMINI_API_KEY}"
+    temperature: 0.1
+    max_tokens: 2000
+
+# =============================================================================
+# Ollama Configuration Examples (Local Models)
+# =============================================================================
+
+ollama_examples:
+  # Lightweight model (Recommended for development)
+  llama_small:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    api_base: "http://localhost:11434"
+    temperature: 0.2
+    max_tokens: 1000
+
+  # Standard model (Good balance of performance and speed)
+  llama_standard:
+    provider: "ollama"
+    model: "llama3.2"
+    api_base: "http://localhost:11434"
+    temperature: 0.1
+    max_tokens: 2000
+
+  # Large model for better accuracy
+  llama_large:
+    provider: "ollama"
+    model: "llama3.1:70b"
+    api_base: "http://localhost:11434"
+    temperature: 0.05
+    max_tokens: 4000
+
+  # Code-specialized model
+  codellama:
+    provider: "ollama"
+    model: "codellama:13b"
+    api_base: "http://localhost:11434"
+    temperature: 0.1
+    max_tokens: 2000
+
+  # Fast inference model
+  mistral:
+    provider: "ollama"
+    model: "mistral:7b"
+    api_base: "http://localhost:11434"
+    temperature: 0.15
+    max_tokens: 1500
+
+# =============================================================================
+# Environment-Specific Configurations
+# =============================================================================
+
+environments:
+  # Development - fast and cheap
+  development:
+    provider: "gemini"
+    model: "gemini-1.5-flash"
+    api_key: "${GEMINI_API_KEY}"
+    temperature: 0.2
+    max_tokens: 500
+
+  # Testing - local model for consistency
+  testing:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    api_base: "http://localhost:11434"
+    temperature: 0.0  # Deterministic for testing
+    max_tokens: 1000
+
+  # Production - reliable and accurate
+  production:
+    provider: "openai"
+    model: "gpt-4o-mini"
+    api_key: "${OPENAI_API_KEY}"
+    temperature: 0.05
+    max_tokens: 2000
+    timeout: 45
+
+  # Edge deployment - local only
+  edge:
+    provider: "ollama" 
+    model: "llama3.2:3b"
+    api_base: "http://localhost:11434"
+    temperature: 0.1
+    max_tokens: 1000
+
+# =============================================================================
+# Cost Optimization Examples
+# =============================================================================
+
+cost_optimization:
+  # Ultra low cost
+  minimal:
+    provider: "gemini"
+    model: "gemini-1.5-flash"
+    temperature: 0.3
+    max_tokens: 200
+
+  # Free local inference
+  free:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    temperature: 0.2
+    max_tokens: 500
+
+  # Balanced cost/performance
+  balanced:
+    provider: "openai"
+    model: "gpt-4o-mini"
+    temperature: 0.1
+    max_tokens: 1000 

@@ -1,0 +1,22 @@
+# Core dependencies
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+httpx
+
+# LLM Provider Dependencies (install as needed)
+# For OpenAI
+# openai
+
+# For Google Gemini
+# google-generativeai
+
+# Ollama doesn't require additional packages - just local installation
+
+# Optional dependencies for full functionality
+# langgraph
+# langchain
+# langchain-core
+# langchain-openai 

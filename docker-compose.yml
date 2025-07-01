@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  solar-agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SOLAR_AGENT_ID=solar-001
+      - SOLAR_CAPACITY_KW=100.0
+      - SOLAR_USE_MOCK_ADAPTER=true
+      - SOLAR_LOG_LEVEL=INFO
+      - SOLAR_ENABLE_PERSISTENCE=true
+      - SOLAR_WORKFLOW_INTERVAL_SECONDS=30
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-key}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+    networks:
+      - solar-grid
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Mock Utility Agent for testing
+  mock-utility:
+    image: nginx:alpine
+    ports:
+      - "8001:80"
+    volumes:
+      - ./mock-utility.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - solar-grid
+    restart: unless-stopped
+
+  # Optional: PostgreSQL for production persistence
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: solar_agent
+      POSTGRES_USER: solar_user
+      POSTGRES_PASSWORD: solar_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - solar-grid
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Optional: Redis for caching and message queuing
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - solar-grid
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Optional: Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - solar-grid
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - solar-grid
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+networks:
+  solar-grid:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data: 

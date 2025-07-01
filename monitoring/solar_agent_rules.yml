@@ -1,0 +1,72 @@
+groups:
+  - name: solar_agent_alerts
+    rules:
+      # Agent is down/offline
+      - alert: SolarAgentDown
+        expr: up{job="solar-agent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Solar Agent is down"
+          description: "Solar Agent {{ $labels.instance }} has been down for more than 1 minute."
+
+      # Low solar output during expected peak hours
+      - alert: LowSolarOutput
+        expr: solar_agent_current_output_kw / solar_agent_capacity_kw < 0.1 and hour() > 10 and hour() < 16
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low solar output detected"
+          description: "Solar output is {{ $value }}% of capacity during peak hours."
+
+      # Critical fault detected
+      - alert: CriticalFaultDetected
+        expr: solar_agent_critical_faults_count > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical fault detected in solar installation"
+          description: "{{ $value }} critical faults detected in agent {{ $labels.agent_id }}."
+
+      # Workflow errors
+      - alert: WorkflowErrors
+        expr: rate(solar_agent_workflow_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High workflow error rate"
+          description: "Workflow error rate is {{ $value }} errors/sec for agent {{ $labels.agent_id }}."
+
+      # Agent stuck in maintenance mode
+      - alert: AgentStuckInMaintenance
+        expr: solar_agent_maintenance_mode == 1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent stuck in maintenance mode"
+          description: "Agent {{ $labels.agent_id }} has been in maintenance mode for over 30 minutes."
+
+      # High curtailment frequency
+      - alert: FrequentCurtailment
+        expr: rate(solar_agent_curtailment_commands_total[1h]) > 0.1
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Frequent curtailment commands"
+          description: "Agent {{ $labels.agent_id }} is receiving frequent curtailment commands."
+
+      # Communication failures
+      - alert: CommunicationFailures
+        expr: rate(solar_agent_communication_failures_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Communication failures detected"
+          description: "High rate of communication failures for agent {{ $labels.agent_id }}." 
