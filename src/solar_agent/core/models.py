@@ -110,22 +110,4 @@ class AgentStatus(BaseModel):
         """Pydantic config."""
         json_encoders = {
             datetime: lambda v: v.isoformat()
-        }
-
-
-class WorkflowState(BaseModel):
-    """State object for LangGraph workflow."""
-    agent_id: str
-    current_mode: AgentMode = AgentMode.NORMAL
-    latest_solar_data: Optional[SolarData] = None
-    current_forecast: Optional[GenerationForecast] = None
-    active_curtailment: Optional[CurtailmentCommand] = None
-    active_faults: List[FaultStatus] = Field(default_factory=list)
-    workflow_step: str = Field(default="read_solar_data")
-    last_update: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Config:
-        """Pydantic config."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
         } 

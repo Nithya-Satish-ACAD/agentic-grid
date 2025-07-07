@@ -3,7 +3,7 @@
 from .base import BaseLLMProvider, LLMConfig, LLMResponse
 from .factory import LLMFactory, create_llm_provider
 from .openai_provider import OpenAIProvider
-from .gemini_provider import GeminiProvider
+from .gemini_provider import GeminiProvider, get_gemini_llm
 from .ollama_provider import OllamaProvider
 
 __all__ = [

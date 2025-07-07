@@ -2,7 +2,8 @@
 
 import os
 from typing import Optional, Dict, Any
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -77,6 +78,9 @@ class Settings(BaseSettings):
     # External services
     mcp_server_url: Optional[str] = None
     weather_api_key: Optional[str] = None
+    
+    AGENT_ID: str = "solar-agent-1"
+    USE_MOCK_ADAPTER: bool = True
     
     class Config:
         """Pydantic config."""

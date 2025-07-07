@@ -15,13 +15,12 @@ except ImportError as e:
     FORECASTING_AVAILABLE = False
 
 try:
-    from .mcp_client import MCPClient, WeatherMCPClient
+    from .mcp_client import MCPClient
     MCP_AVAILABLE = True
 except ImportError as e:
     # MCP dependencies not available  
     print(f"MCP tools not available: {e}")
     MCPClient = None
-    WeatherMCPClient = None
     MCP_AVAILABLE = False
 
 # Export available tools
@@ -36,4 +35,4 @@ if FORECASTING_AVAILABLE:
     __all__.extend(["SolarForecaster", "generate_forecast"])
 
 if MCP_AVAILABLE:
-    __all__.extend(["MCPClient", "WeatherMCPClient"]) 
+    __all__.extend(["MCPClient"]) 

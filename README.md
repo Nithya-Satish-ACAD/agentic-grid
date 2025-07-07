@@ -1,29 +1,97 @@
-# Solar Agent
+# Solar Agent (LangGraph + Gemini)
 
-A modular, production-ready backend for distributed solar energy management, designed for standalone operation or integration into a multi-agent grid (with Utility, Battery, Load agents, etc).
+A modular, production-grade backend for distributed solar energy management, designed for standalone operation or integration into a multi-agent grid (with Utility, Battery, Load agents, etc).
+
+## Features
+- LangGraph workflow with human-in-the-loop interrupt
+- Gemini LLM (Google, via langchain-google-genai)
+- Modular hardware adapters (mock/real)
+- FastAPI endpoints: curtailment, status, health, alerts, metrics
+- Structured logging
+- State persistence
+- Unit tests for workflow and API
+
+## Setup
+
+1. **Install dependencies:**
+   ```bash
+   pip install fastapi uvicorn langgraph langchain-google-genai pydantic pydantic-settings pytest
+   ```
+2. **Set environment variables:**
+   - Create a `.env` file or export:
+     ```bash
+     export GEMINI_API_KEY=your-google-api-key
+     export AGENT_ID=solar-agent-1
+     export USE_MOCK_ADAPTER=true
+     ```
+3. **Run the agent:**
+   ```bash
+   uvicorn src.solar_agent.api.endpoints:app --reload
+   ```
+
+## API Usage
+
+- **POST /curtailment**
+  ```json
+  { "amount": 20.0 }
+  ```
+- **GET /status**
+- **GET /alerts**
+- **GET /health**
+- **GET /metrics**
+
+## Example: Simulate Curtailment
+```bash
+curl -X POST "http://localhost:8000/curtailment" -H "Content-Type: application/json" -d '{"amount": 20.0}'
+```
+
+## Testing
+```bash
+pytest tests/
+```
+
+## Architecture
+
+- `src/solar_agent/adapters/` — Hardware abstraction
+- `src/solar_agent/llm/` — Gemini LLM integration
+- `src/solar_agent/workflow/` — LangGraph workflow, nodes, state, persistence
+- `src/solar_agent/api/` — FastAPI endpoints
+- `tests/` — Unit tests
+
+## Extending
+- Add new adapters in `adapters/`
+- Add new workflow nodes in `workflow/nodes.py`
+- Add new endpoints in `api/endpoints.py`
+
+---
+MIT License
 
 ---
 
 ## Features
 
-- **Modular Hardware Adapters:** Easily extend to new inverter/solar hardware.
-- **LLM-Agnostic:** Supports OpenAI, Gemini, and local LLMs via Ollama.
-- **LangGraph Workflows:** Flexible, human-in-the-loop, and fault-tolerant agent logic.
-- **REST API:** FastAPI-based endpoints for control, monitoring, and integration.
+- **Thread-safe, Dependency-Injected State:** All agent/device state is managed by an injectable, thread-safe manager.
+- **Robust Adapters:** All hardware adapters are hardened; unimplemented methods raise clear errors.
+- **Consistent API & Error Handling:** All endpoints use Pydantic models and global exception handlers for robust, predictable responses.
+- **Ecosystem-Ready:** `/capabilities` endpoint for agent discovery and integration.
 - **Production-Ready:** Designed for Kubernetes, scalable messaging, and robust observability.
 
 ---
 
-## Project Structure
+## Architecture Diagram
 
-```
-src/solar_agent/
-  adapters/      # Hardware abstraction (Sunspec, mock, etc)
-  api/           # FastAPI endpoints and models
-  core/          # Config, exceptions, core models
-  llm/           # LLM provider interfaces (OpenAI, Gemini, Ollama)
-  tools/         # Data generation, forecasting, MCP client
-  workflow/      # LangGraph workflows, nodes, state
+```mermaid
+graph TD;
+    subgraph API Layer
+        A[FastAPI App]
+        A --> B[DeviceStateManager (DI)]
+        A --> C[Adapters]
+        A --> D[LLM Providers]
+    end
+    B -->|Thread-safe| E[In-Memory/DB State]
+    C -->|Mock/SunSpec| F[Hardware]
+    D -->|OpenAI/Gemini/Ollama| G[LLM Service]
+    A --> H[/capabilities Endpoint]
 ```
 
 ---
@@ -52,21 +120,42 @@ git checkout solar-agent
 ### 3. Run Locally
 
 ```bash
-python main.py
-```
-
-Or with Docker:
-
-```bash
-docker-compose up --build
+uvicorn src.solar_agent.api.endpoints:app --reload
 ```
 
 ---
 
-## API Usage
+## API Usage Examples
 
-- REST endpoints documented via FastAPI at `/docs` when running.
-- Example: `POST /api/solar/command` to send a control command.
+- **List all devices:**
+  ```http
+  GET /devices
+  ```
+- **Get status for all devices:**
+  ```http
+  GET /status
+  ```
+- **Get status by ID:**
+  ```http
+  GET /status/agent_1
+  ```
+- **Apply curtailment:**
+  ```http
+  POST /curtailment
+  {
+    "agent_id": "agent_2",
+    "curtailment_amount": 30
+  }
+  ```
+- **Get logs:**
+  ```http
+  GET /logs
+  GET /logs/agent_3
+  ```
+- **View agent capabilities:**
+  ```http
+  GET /capabilities
+  ```
 
 ---
 
@@ -397,12 +486,6 @@ flake8 src/
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-- Documentation: See `docs/` directory
-- Issues: GitHub Issues
-- Email: team@solargrid.com
 
 ## 🔮 Roadmap
 

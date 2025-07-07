@@ -1,6 +1,5 @@
 """FastAPI module for Solar Agent REST endpoints."""
 
-from .main import create_app
 from .endpoints import router
 from .models import (
     CurtailmentRequest,
@@ -10,7 +9,6 @@ from .models import (
 )
 
 __all__ = [
-    "create_app",
     "router",
     "CurtailmentRequest",
     "StatusResponse", 

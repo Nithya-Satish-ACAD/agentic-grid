@@ -11,6 +11,8 @@ except ImportError:
     GEMINI_AVAILABLE = False
 
 from .base import BaseLLMProvider, LLMResponse, LLMConfig
+from langchain_google_genai import ChatGoogleGenerativeAI
+from solar_agent.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -147,4 +149,11 @@ class GeminiProvider(BaseLLMProvider):
         input_cost = (prompt_tokens / 1000) * model_pricing["input"]
         output_cost = (completion_tokens / 1000) * model_pricing["output"]
         
-        return input_cost + output_cost 
+        return input_cost + output_cost
+
+def get_gemini_llm():
+    model_code = getattr(settings, "gemini_model", None) or "models/gemini-2.5-flash"
+    return ChatGoogleGenerativeAI(
+        model=model_code,
+        google_api_key=settings.gemini_api_key
+    ) 

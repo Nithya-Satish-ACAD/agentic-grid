@@ -3,8 +3,9 @@
 import math
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from solar_agent.core.models import SolarData
+import asyncio
 
 
 def generate_mock_solar_data(
@@ -281,4 +282,76 @@ def generate_seasonal_data(
         
         profile.extend(day_profile)
     
-    return profile 
+    return profile
+
+
+class DeviceStateManager:
+    """
+    Thread-safe, injectable manager for device/agent state.
+    Use this as a dependency in FastAPI endpoints.
+    """
+    def __init__(self, device_ids: List[str]):
+        self._lock = asyncio.Lock()
+        self._device_ids = device_ids
+        self._state: Dict[str, Dict[str, Any]] = {
+            agent_id: self._init_device_state(agent_id) for agent_id in device_ids
+        }
+
+    def _init_device_state(self, agent_id: str) -> Dict[str, Any]:
+        return {
+            "agent_id": agent_id,
+            "generation_kw": random.uniform(20, 100),
+            "consumption_kw": random.uniform(10, 80),
+            "forecast_kw": random.uniform(20, 100),
+            "curtailment_kw": 0.0,
+            "last_updated": datetime.utcnow(),
+            "logs": [],
+        }
+
+    async def get_all_status(self) -> List[Dict[str, Any]]:
+        async with self._lock:
+            return [state.copy() for state in self._state.values()]
+
+    async def get_status(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        async with self._lock:
+            state = self._state.get(agent_id)
+            return state.copy() if state else None
+
+    async def set_curtailment(self, agent_id: str, curtailment_amount: float) -> bool:
+        async with self._lock:
+            if agent_id not in self._state:
+                return False
+            self._state[agent_id]["curtailment_kw"] = float(curtailment_amount)
+            self._state[agent_id]["last_updated"] = datetime.utcnow()
+            return True
+
+    async def get_devices(self) -> List[str]:
+        return self._device_ids.copy()
+
+    async def get_logs(self, agent_id: str = None) -> Any:
+        async with self._lock:
+            if agent_id:
+                state = self._state.get(agent_id)
+                return state["logs"] if state else None
+            return {aid: state["logs"] for aid, state in self._state.items()}
+
+    async def append_log(self, agent_id: str, log_entry: Dict[str, Any]):
+        async with self._lock:
+            if agent_id in self._state:
+                self._state[agent_id]["logs"].append(log_entry)
+                if len(self._state[agent_id]["logs"]) > 100:
+                    self._state[agent_id]["logs"] = self._state[agent_id]["logs"][-100:]
+
+    async def periodic_logging(self):
+        while True:
+            now = datetime.utcnow()
+            for agent_id in self._device_ids:
+                state = self._state[agent_id]
+                log_entry = {
+                    "timestamp": now.isoformat(),
+                    "generation_kw": state["generation_kw"],
+                    "consumption_kw": state["consumption_kw"],
+                    "forecast_kw": state["forecast_kw"],
+                }
+                await self.append_log(agent_id, log_entry)
+            await asyncio.sleep(60) 

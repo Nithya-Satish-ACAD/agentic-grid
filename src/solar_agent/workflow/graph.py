@@ -55,13 +55,13 @@ def should_raise_fault_alert(state: WorkflowState) -> str:
     """Conditional logic for fault alert."""
     if state.active_faults and any(f.is_critical for f in state.active_faults):
         return "raise_fault_alert"
-    return "maintenance_mode"
+    return "handle_maintenance_mode"
 
 
 def should_continue_or_end(state: WorkflowState) -> str:
     """Conditional logic for workflow continuation."""
     if state.maintenance_mode:
-        return "maintenance_mode"
+        return "handle_maintenance_mode"
     if state.error_count >= 3:  # Max retries reached
         return END
     return "read_solar_data"  # Continue the loop
@@ -112,7 +112,7 @@ def create_solar_agent_graph(
     workflow.add_node("raise_fault_alert", 
                      lambda state: raise_fault_alert(state))
     
-    workflow.add_node("maintenance_mode", 
+    workflow.add_node("handle_maintenance_mode", 
                      lambda state: maintenance_mode(state))
     
     # Define the workflow edges
@@ -171,29 +171,30 @@ def create_solar_agent_graph(
         should_raise_fault_alert,
         {
             "raise_fault_alert": "raise_fault_alert",
-            "maintenance_mode": "maintenance_mode" 
+            "handle_maintenance_mode": "handle_maintenance_mode" 
         }
     )
     
-    # From raise_fault_alert, go to maintenance_mode
-    workflow.add_edge("raise_fault_alert", "maintenance_mode")
+    # From raise_fault_alert, go to handle_maintenance_mode
+    workflow.add_edge("raise_fault_alert", "handle_maintenance_mode")
     
-    # From maintenance_mode, conditionally continue or end
+    # From handle_maintenance_mode, conditionally continue or end
     workflow.add_conditional_edges(
-        "maintenance_mode",
+        "handle_maintenance_mode",
         should_continue_or_end,
         {
-            "maintenance_mode": "maintenance_mode",
+            "handle_maintenance_mode": "handle_maintenance_mode",
             "read_solar_data": "read_solar_data",
             END: END
         }
     )
     
     # Configure persistence if enabled
-    if enable_persistence:
-        memory = MemorySaver()
-        workflow.set_memory(memory)
-        logger.info("Workflow persistence enabled")
+    # Persistence is not supported in current LangGraph version. Implement your own if needed.
+    # if enable_persistence:
+    #     memory = MemorySaver()
+    #     workflow.set_memory(memory)
+    #     logger.info("Workflow persistence enabled")
     
     # Compile the workflow
     app = workflow.compile()
@@ -228,7 +229,10 @@ def create_simple_workflow(adapter) -> StateGraph:
 
 
 class WorkflowManager:
-    """Manager class for Solar Agent workflow execution."""
+    """
+    Manager class for Solar Agent workflow execution.
+    Handles state persistence, workflow execution, and human-in-the-loop interrupts.
+    """
     
     def __init__(
         self, 

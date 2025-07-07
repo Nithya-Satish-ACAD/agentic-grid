@@ -55,22 +55,16 @@ class SunSpecAdapter(HardwareAdapter):
         )
     
     async def set_output_limit(self, limit_kw: float) -> bool:
-        """Set output power limit."""
-        if not self.is_connected:
-            raise AdapterException(
-                "Adapter not connected",
-                adapter_type=self.adapter_type,
-                error_code="NOT_CONNECTED"
-            )
-        return True
+        """Set output power limit. TODO: Implement real Modbus write."""
+        raise NotImplementedError("set_output_limit() not implemented for SunSpecAdapter yet.")
     
     async def get_fault_status(self) -> List[FaultStatus]:
-        """Get current fault status."""
-        return []
+        """Get current fault status. TODO: Implement real Modbus read."""
+        raise NotImplementedError("get_fault_status() not implemented for SunSpecAdapter yet.")
     
     async def clear_fault(self, fault_id: str) -> bool:
-        """Clear a specific fault."""
-        return False
+        """Clear a specific fault. TODO: Implement real Modbus write."""
+        raise NotImplementedError("clear_fault() not implemented for SunSpecAdapter yet.")
     
     async def get_device_info(self) -> Dict[str, Any]:
         """Get device information."""

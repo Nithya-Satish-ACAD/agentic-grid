@@ -33,7 +33,7 @@ class HardwareAdapter(ABC):
         Raises:
             AdapterException: If connection fails
         """
-        pass
+        raise NotImplementedError("connect() must be implemented in subclass.")
     
     @abstractmethod
     async def disconnect(self) -> bool:
@@ -42,7 +42,7 @@ class HardwareAdapter(ABC):
         Returns:
             True if disconnection successful, False otherwise
         """
-        pass
+        raise NotImplementedError("disconnect() must be implemented in subclass.")
     
     @abstractmethod
     async def read_solar_data(self) -> SolarData:
@@ -54,7 +54,7 @@ class HardwareAdapter(ABC):
         Raises:
             AdapterException: If reading fails
         """
-        pass
+        raise NotImplementedError("read_solar_data() must be implemented in subclass.")
     
     @abstractmethod
     async def set_output_limit(self, limit_kw: float) -> bool:
@@ -69,7 +69,7 @@ class HardwareAdapter(ABC):
         Raises:
             AdapterException: If setting limit fails
         """
-        pass
+        raise NotImplementedError("set_output_limit() must be implemented in subclass.")
     
     @abstractmethod
     async def get_fault_status(self) -> List[FaultStatus]:
@@ -81,7 +81,7 @@ class HardwareAdapter(ABC):
         Raises:
             AdapterException: If reading fault status fails
         """
-        pass
+        raise NotImplementedError("get_fault_status() must be implemented in subclass.")
     
     @abstractmethod
     async def clear_fault(self, fault_id: str) -> bool:
@@ -96,7 +96,7 @@ class HardwareAdapter(ABC):
         Raises:
             AdapterException: If clearing fault fails
         """
-        pass
+        raise NotImplementedError("clear_fault() must be implemented in subclass.")
     
     @abstractmethod
     async def get_device_info(self) -> Dict[str, Any]:
@@ -105,7 +105,7 @@ class HardwareAdapter(ABC):
         Returns:
             Dictionary containing device information
         """
-        pass
+        raise NotImplementedError("get_device_info() must be implemented in subclass.")
     
     @abstractmethod
     async def is_online(self) -> bool:
@@ -114,7 +114,7 @@ class HardwareAdapter(ABC):
         Returns:
             True if hardware is online, False otherwise
         """
-        pass
+        raise NotImplementedError("is_online() must be implemented in subclass.")
     
     async def health_check(self) -> Dict[str, Any]:
         """Perform adapter health check.
