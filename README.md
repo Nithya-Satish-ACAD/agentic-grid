@@ -494,4 +494,62 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] Multi-agent coordination protocols
 - [ ] Edge computing deployment
 - [ ] Blockchain integration for energy trading
-- [ ] Advanced fault prediction algorithms 
+- [ ] Advanced fault prediction algorithms
+
+# Solar Agent (Production-Grade)
+
+## 🚀 Features
+- Modular, production-grade backend for solar agent operations
+- FastAPI API with robust, context-rich LLM endpoints
+- LangGraph workflow for agent reasoning and control
+- Gemini (default), OpenAI, or Ollama LLM support (configurable)
+- Structured, context-aware prompts and robust fallback for LLM calls
+- Caching, throttling, and usage monitoring (in progress)
+
+## 🔑 Environment Variables & Safety
+- All sensitive config (API keys, etc.) should be set in `.env` (never commit this file)
+- `.env` is now in `.gitignore` by default
+- Example:
+  ```
+  LLM_PROVIDER=gemini
+  LLM_MODEL=models/gemini-2.5-flash
+  GEMINI_API_KEY=your-key
+  AGENT_ID=solar-agent-1
+  USE_MOCK_ADAPTER=true
+  ```
+
+## 🧠 LLM Endpoints
+- `POST /explain` — Context-rich, structured explanation of agent actions/events
+- `POST /negotiate` — Structured negotiation/coordination with context
+- `POST /interpret` — Interprets ambiguous instructions with context
+- `POST /ask` — General Q&A, context-aware
+- All endpoints accept optional `provider` and `model` fields to override the default LLM
+- All responses are structured JSON, with robust fallback if the LLM output is not valid JSON
+
+## 🏗️ Example Usage
+```bash
+curl -X POST http://localhost:8000/explain \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Why did the agent curtail output at 2pm?"}'
+
+curl -X POST http://localhost:8000/negotiate \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Can you reduce output by 10% for the next hour?"}'
+
+curl -X POST http://localhost:8000/interpret \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Try to maximize output unless grid is unstable."}'
+
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"input": "What is the expected solar output tomorrow?"}'
+```
+
+## ⚠️ Security & Best Practices
+- **Never commit your `.env` file or API keys to version control.**
+- Use `.env.template` for sharing non-sensitive config structure.
+- Review `.gitignore` to ensure all sensitive and local files are excluded.
+
+## 📚 More
+- See `src/solar_agent/api/endpoints.py` and `src/solar_agent/workflow/nodes.py` for LLM integration details.
+- For advanced deployment, monitoring, and workflow details, see the full documentation and codebase. 
