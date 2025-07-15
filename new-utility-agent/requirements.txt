@@ -1,0 +1,13 @@
+# Core dependencies
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+httpx
+langgraph
+google-generativeai
+langchain-google-genai
+
+# Beckn/UEI specific, if needed later
+# py-beckn-client 

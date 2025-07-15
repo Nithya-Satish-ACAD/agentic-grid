@@ -1,0 +1,40 @@
+# Python ignores
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Tests and coverage
+.pytest_cache/
+coverage.xml
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS files
+.DS_Store
+
+# Project-specific
+tests/__pycache__/
+utility_agent/__pycache__/
+utility_agent/adapters/__pycache__/
+utility_agent/api/__pycache__/
+utility_agent/workflow/__pycache__/
+utility_agent/beckn/__pycache__/
+
+# Ignore generated files if any
+state.json 
