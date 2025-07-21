@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+langchain
+langgraph
+httpx
+python-dotenv
+langgraph-checkpoint-sqlite
+
+[dev]
+pytest
+pytest-asyncio

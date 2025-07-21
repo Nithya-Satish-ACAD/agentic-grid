@@ -1,0 +1,23 @@
+{
+    "protocolVersion": "0.2.9",
+    "name": "Solar Prosumer Agent",
+    "description": "An agent representing a solar-equipped household, capable of selling surplus energy and purchasing grid power.",
+    "url": "http://localhost:8001/a2a",
+    "preferredTransport": "JSONRPC",
+    "capabilities": {
+      "streaming": true,
+      "pushNotifications": false
+    },
+    "skills": [
+      {
+        "id": "sell_surplus_energy",
+        "name": "Sell Surplus Energy",
+        "description": "Acts as a BPP to sell surplus solar energy. Initiates a UEI transaction to offer energy to the network."
+      },
+      {
+        "id": "request_grid_power",
+        "name": "Request Grid Power",
+        "description": "Acts as a BAP to purchase power from the grid. Initiates a UEI search for grid power."
+      }
+    ]
+  }

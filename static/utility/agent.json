@@ -1,0 +1,23 @@
+{
+    "protocolVersion": "0.2.9",
+    "name": "Utility Grid Agent",
+    "description": "An agent that manages grid power supply and can procure energy from distributed resources to ensure grid stability.",
+    "url": "http://localhost:8002/a2a",
+    "preferredTransport": "JSONRPC",
+    "capabilities": {
+      "streaming": true,
+      "pushNotifications": false
+    },
+    "skills": [
+      {
+        "id": "provide_grid_power",
+        "name": "Provide Grid Power",
+        "description": "Acts as a BPP to provide standard grid power to consumers."
+      },
+      {
+        "id": "procure_surplus_energy",
+        "name": "Procure Surplus Energy",
+        "description": "Acts as a BAP to purchase surplus energy from prosumers to maintain grid stability."
+      }
+    ]
+  }

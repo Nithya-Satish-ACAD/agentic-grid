@@ -1,0 +1,29 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "p2p-energy-grid"
+version = "0.1.0"
+description = "A P2P energy grid simulation using LangGraph and Beckn."
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "langchain",
+    "langgraph",
+    "httpx",
+    "python-dotenv",
+    "langgraph-checkpoint"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
