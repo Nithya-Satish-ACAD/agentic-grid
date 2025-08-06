@@ -48,7 +48,7 @@ class EnergyContract(BaseModel):
 
 class AgentProfile(BaseModel):
     agent_id: str
-    agent_type: Literal['utility', 'solar']
+    agent_type: Literal['utility', 'household']
     current_role: Literal['BAP', 'BPP', 'IDLE'] = 'IDLE'
     current_energy_storage_kwh: float = 0.0
     max_capacity_kwh: float

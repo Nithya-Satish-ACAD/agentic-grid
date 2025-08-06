@@ -38,3 +38,8 @@ async def broadcast_search(request: Request, background_tasks: BackgroundTasks):
         background_tasks.add_task(forward_request, uri, search_payload)
 
     return {"message": {"ack": {"status": "ACK"}}}
+
+@app.get("/registry")
+async def get_registry():
+    """Returns the current list of registered BPP URIs."""
+    return {"agents": bpp_registry}

@@ -1,5 +1,6 @@
 # src/agents/agent_graph.py
 import httpx
+import random
 from typing import List, Optional, Literal, Annotated
 from typing_extensions import TypedDict
 import operator
@@ -27,9 +28,11 @@ def route_trigger(state: P2PAgentState) -> str:
     if trigger == "simulation_cycle": return "supervisor"
     if trigger == "incoming_search": return "formulate_offer"
     if trigger == "incoming_select": return "process_selection"
+    if trigger == "incoming_init": return "process_init"
     if trigger == "incoming_confirm": return "process_confirmation"
     if trigger == "incoming_on_search": return "evaluate_offers"
-    if trigger == "incoming_on_select": return "send_confirm"
+    if trigger == "incoming_on_select": return "send_init"
+    if trigger == "incoming_on_init": return "send_confirm"
     if trigger == "incoming_on_confirm": return "process_bap_completion"
     return "__end__"
 
@@ -52,15 +55,43 @@ def route_after_evaluation(state: P2PAgentState) -> str:
 async def supervisor_node(state: P2PAgentState) -> dict:
     profile = state['profile']
     print(f"--- SUPERVISOR ({profile.agent_id}) | Energy: {profile.current_energy_storage_kwh:.2f} kWh ---")
-    if profile.agent_type == 'solar' and profile.current_energy_storage_kwh < 0.2 * profile.max_capacity_kwh:
-        if state.get("active_transaction_id"): return {"trigger": "idle"}
+    
+    # Clear stuck transactions after a reasonable time (simplified logic)
+    if state.get("active_transaction_id") and state.get("trigger") == "simulation_cycle":
+        print(f"--- SUPERVISOR: Clearing stuck transaction ---")
+        return {
+            "active_transaction_id": None, 
+            "active_transaction_context": None, 
+            "selected_offer": None,
+            "final_contract": None,
+            "received_offers": [],
+            "trigger": "idle"
+        }
+    
+    # For household agents, trigger buying when energy is low
+    if profile.agent_type == 'household' and profile.current_energy_storage_kwh < 0.3 * profile.max_capacity_kwh:
+        if state.get("active_transaction_id"): 
+            print(f"--- SUPERVISOR: Already in transaction, staying idle ---")
+            return {"trigger": "idle"}
+        print(f"--- SUPERVISOR: Energy low ({profile.current_energy_storage_kwh:.2f} kWh), starting BAP flow ---")
         return {"trigger": "start_bap_flow"}
+    
+    # For household agents with high energy, they can act as sellers
+    elif profile.agent_type == 'household' and profile.current_energy_storage_kwh > 0.7 * profile.max_capacity_kwh:
+        print(f"--- SUPERVISOR: Energy high ({profile.current_energy_storage_kwh:.2f} kWh), ready to sell ---")
+        return {"trigger": "idle"}  # Will respond to search requests
+    
     return {"trigger": "idle"}
 
 async def initiate_search_node(state: P2PAgentState) -> dict:
     print(f"--- BAP ({state['profile'].agent_id}): INITIATE SEARCH ---")
     profile = state["profile"]
-    context = BecknContext(action="search", bap_id=profile.agent_id, bap_uri=settings.SOLAR_AGENT_BASE_URL)
+    # Use the agent's own URL instead of hardcoded settings
+    # Map agent ID to container name and port
+    agent_num = profile.agent_id.split('-')[-1]
+    port = 8001 + (int(agent_num) - 1) * 2
+    agent_url = f"http://household_agent_{int(agent_num)}:{port}"
+    context = BecknContext(action="search", bap_id=profile.agent_id, bap_uri=agent_url)
     search_payload = {"context": context, "message": {"intent": {}}}
     return {
         "active_transaction_id": context.transaction_id,
@@ -69,12 +100,26 @@ async def initiate_search_node(state: P2PAgentState) -> dict:
     }
 
 async def evaluate_offers_node(state: P2PAgentState) -> dict:
+    # Ensure profile is available - if not, get it from simulation state
+    if 'profile' not in state:
+        print(f"--- WARNING: Profile not found in state, skipping evaluation ---")
+        return {"trigger": "search_failed"}
+    
     print(f"--- BAP ({state['profile'].agent_id}): EVALUATE OFFERS ---")
     offers = state.get("received_offers", [])
     if not offers: return {"trigger": "search_failed"}
     best_offer = min(offers, key=lambda o: o.price_per_kwh)
     print(f"Best offer selected: ${best_offer.price_per_kwh}/kWh from {best_offer.provider_id}")
-    bpp_uri = settings.UTILITY_AGENT_BASE_URL if best_offer.provider_id.startswith('utility') else settings.SOLAR_AGENT_BASE_URL
+    
+    # Use container URLs consistently
+    if best_offer.provider_id.startswith('utility'):
+        bpp_uri = "http://utility_agent:8002"
+    else:
+        # Extract agent number and construct container URL
+        agent_num = best_offer.provider_id.split('-')[-1]
+        port = 8001 + (int(agent_num) - 1) * 2
+        bpp_uri = f"http://household_agent_{int(agent_num)}:{port}"
+    
     context = state["active_transaction_context"].copy(update={"action": "select", "bpp_id": best_offer.provider_id, "bpp_uri": bpp_uri})
     return {"selected_offer": best_offer, "active_transaction_context": context, "trigger": "selection_made"}
 
@@ -86,7 +131,13 @@ async def send_select_node(state: P2PAgentState) -> dict:
 
 async def send_confirm_node(state: P2PAgentState) -> dict:
     print(f"--- BAP ({state['profile'].agent_id}): SENDING CONFIRM ---")
-    context, offer = state["active_transaction_context"], state["selected_offer"]
+    context, offer = state["active_transaction_context"], state.get("selected_offer")
+    
+    # Check if offer exists
+    if not offer:
+        print(f"--- WARNING: No selected offer found, skipping confirm ---")
+        return {"trigger": "transaction_failed"}
+    
     confirm_payload = {"context": context.copy(update={"action": "confirm"}), "message": {"order": BecknOrder(provider={"id": offer.provider_id}, items=[BecknItem(id=offer.offer_id)])}}
     return {"outgoing_request": {"url": f"{context.bpp_uri}/confirm", "payload": confirm_payload}}
 
@@ -95,17 +146,58 @@ async def process_bap_completion_node(state: P2PAgentState) -> dict:
     contract, profile = state["final_contract"], state["profile"]
     profile.current_energy_storage_kwh += contract.agreed_quantity_kwh
     print(f"✅ Contract confirmed! Energy purchased. New battery level: {profile.current_energy_storage_kwh:.2f} kWh")
-    return {"profile": profile, "active_transaction_id": None}
+    # Clear transaction state completely
+    return {
+        "profile": profile, 
+        "active_transaction_id": None, 
+        "active_transaction_context": None,
+        "selected_offer": None,
+        "final_contract": None,
+        "received_offers": []
+    }
+
+async def send_init_node(state: P2PAgentState) -> dict:
+    print(f"--- BAP ({state['profile'].agent_id}): SENDING INIT ---")
+    context, offer = state["active_transaction_context"], state.get("selected_offer")
+    
+    # Check if offer exists
+    if not offer:
+        print(f"--- WARNING: No selected offer found, skipping init ---")
+        return {"trigger": "transaction_failed"}
+    
+    init_payload = {"context": context.copy(update={"action": "init"}).dict(), "message": {"order": {"provider": {"id": offer.provider_id}, "items": [{"id": offer.offer_id}]}}}
+    return {"outgoing_request": {"url": f"{context.bpp_uri}/init", "payload": init_payload}}
+
+async def process_init_node(state: P2PAgentState) -> dict:
+    print(f"--- BPP ({state['profile'].agent_id}): PROCESSING INIT ---")
+    context = state["active_transaction_context"].copy(update={"action": "on_init"})
+    # BPP returns the final quote in the on_init response
+    payload = {"context": context.dict(), "message": {"order": {"quote": {"price": {"currency": "USD", "value": "2.50"}}}}}
+    return {"outgoing_request": {"url": f"{context.bap_uri}/on_init", "payload": payload}}
 
 async def formulate_offer_node(state: P2PAgentState) -> dict:
     print(f"--- BPP ({state['profile'].agent_id}): FORMULATE OFFER ---")
+
+    # Simulate random availability
+    if random.random() < 0.3: # 30% chance the agent is "offline" or busy
+        print(f"Agent {state['profile'].agent_id} is unavailable to make an offer this time.")
+        return {}
+
     profile, in_context = state["profile"], state["active_transaction_context"]
-    if profile.agent_type == 'solar' and profile.current_energy_storage_kwh < 0.8 * profile.max_capacity_kwh: 
-        print("Solar Agent has insufficient surplus energy. Not making an offer.")
+    if profile.agent_type == 'household' and profile.current_energy_storage_kwh < 0.6 * profile.max_capacity_kwh: 
+        print(f"Household Agent {profile.agent_id} has insufficient surplus energy ({profile.current_energy_storage_kwh:.2f} kWh). Not making an offer.")
         return {}
     
-    qty, price = (10.0, 0.15) if profile.agent_type == 'solar' else (500.0, 0.25)
-    bpp_uri = settings.SOLAR_AGENT_BASE_URL if profile.agent_type == 'solar' else settings.UTILITY_AGENT_BASE_URL
+    qty, price = (10.0, 0.15) if profile.agent_type == 'household' else (500.0, 0.25)
+    
+    # Use container URLs consistently
+    if profile.agent_type == 'household':
+        agent_num = profile.agent_id.split('-')[-1]
+        port = 8001 + (int(agent_num) - 1) * 2
+        bpp_uri = f"http://household_agent_{int(agent_num)}:{port}"
+    else:
+        bpp_uri = "http://utility_agent:8002"
+    
     offer = EnergyOffer(provider_id=profile.agent_id, quantity_kwh=qty, price_per_kwh=price, valid_until=datetime.now(timezone.utc) + timedelta(seconds=60))
     context = in_context.copy(update={"action": "on_search", "bpp_id": profile.agent_id, "bpp_uri": bpp_uri})
     payload = {"context": context, "message": {"catalog": {"items": [offer]}}}
@@ -120,13 +212,21 @@ async def process_selection_node(state: P2PAgentState) -> dict:
 async def process_confirmation_node(state: P2PAgentState) -> dict:
     print(f"--- BPP ({state['profile'].agent_id}): PROCESSING CONFIRMATION ---")
     context, profile = state["active_transaction_context"], state["profile"]
-    qty, price = (10.0, 0.15) if profile.agent_type == 'solar' else (10.0, 0.25)
+    qty, price = (10.0, 0.15) if profile.agent_type == 'household' else (10.0, 0.25)
     offer_stub = EnergyOffer(provider_id=profile.agent_id, quantity_kwh=qty, price_per_kwh=price, valid_until=datetime.now(timezone.utc) + timedelta(seconds=10))
     contract = EnergyContract(bap_agent_id=context.bap_id, bpp_agent_id=profile.agent_id, agreed_quantity_kwh=qty, agreed_price_per_kwh=price, original_offer=offer_stub, fulfillment_start_time=datetime.now(timezone.utc) + timedelta(seconds=5))
     profile.current_energy_storage_kwh -= contract.agreed_quantity_kwh
     payload = {"context": context.copy(update={"action": "on_confirm"}), "message": {"order": contract}}
     print(f"✅ Contract finalized. Energy sold. New level: {profile.current_energy_storage_kwh:.2f}")
-    return {"profile": profile, "outgoing_request": {"url": f"{context.bap_uri}/on_confirm", "payload": payload}}
+    # Clear transaction state after completion
+    return {
+        "profile": profile, 
+        "outgoing_request": {"url": f"{context.bap_uri}/on_confirm", "payload": payload},
+        "active_transaction_id": None,
+        "active_transaction_context": None,
+        "selected_offer": None,
+        "final_contract": None
+    }
 
 
 

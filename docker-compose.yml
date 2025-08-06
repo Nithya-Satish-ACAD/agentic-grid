@@ -1,0 +1,210 @@
+services:
+  gateway:
+    build: .
+    container_name: gateway
+    command: uvicorn src.protocols.beckn.mock_gateway:app --host 0.0.0.0 --port 9000
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+
+  utility_agent:
+    build: .
+    container_name: utility_agent
+    command: uvicorn src.agents.utility.main:app --host 0.0.0.0 --port 8002
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=utility-agent-01
+      - AGENT_PORT=8002
+      - AGENT_OWN_URL=http://utility_agent:8002
+
+  # --- Household Agents ---
+  household_agent_1:
+    build: .
+    container_name: household_agent_1
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-01
+      - AGENT_PORT=8001
+      - AGENT_OWN_URL=http://household_agent_1:8001
+      - INITIAL_SOC=15 # Buyer (Low SoC)
+
+  household_agent_2:
+    build: .
+    container_name: household_agent_2
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8003
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-02
+      - AGENT_PORT=8003
+      - AGENT_OWN_URL=http://household_agent_2:8003
+      - INITIAL_SOC=95 # Seller (High SoC)
+
+  household_agent_3:
+    build: .
+    container_name: household_agent_3
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8005
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-03
+      - AGENT_PORT=8005
+      - AGENT_OWN_URL=http://household_agent_3:8005
+      - INITIAL_SOC=15 # Buyer (Low SoC)
+
+  household_agent_4:
+    build: .
+    container_name: household_agent_4
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8007
+    ports:
+      - "8007:8007"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-04
+      - AGENT_PORT=8007
+      - AGENT_OWN_URL=http://household_agent_4:8007
+      - INITIAL_SOC=95 # Seller (High SoC)
+
+  household_agent_5:
+    build: .
+    container_name: household_agent_5
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8009
+    ports:
+      - "8009:8009"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-05
+      - AGENT_PORT=8009
+      - AGENT_OWN_URL=http://household_agent_5:8009
+      - INITIAL_SOC=15 # Buyer (Low SoC)
+
+  household_agent_6:
+    build: .
+    container_name: household_agent_6
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8011
+    ports:
+      - "8011:8011"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-06
+      - AGENT_PORT=8011
+      - AGENT_OWN_URL=http://household_agent_6:8011
+      - INITIAL_SOC=95 # Seller (High SoC)
+
+  household_agent_7:
+    build: .
+    container_name: household_agent_7
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8013
+    ports:
+      - "8013:8013"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-07
+      - AGENT_PORT=8013
+      - AGENT_OWN_URL=http://household_agent_7:8013
+      - INITIAL_SOC=15 # Buyer (Low SoC)
+
+  household_agent_8:
+    build: .
+    container_name: household_agent_8
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8015
+    ports:
+      - "8015:8015"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-08
+      - AGENT_PORT=8015
+      - AGENT_OWN_URL=http://household_agent_8:8015
+      - INITIAL_SOC=95 # Seller (High SoC)
+
+  household_agent_9:
+    build: .
+    container_name: household_agent_9
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8017
+    ports:
+      - "8017:8017"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-09
+      - AGENT_PORT=8017
+      - AGENT_OWN_URL=http://household_agent_9:8017
+      - INITIAL_SOC=15 # Buyer (Low SoC)
+
+  household_agent_10:
+    build: .
+    container_name: household_agent_10
+    command: uvicorn src.agents.household.main:app --host 0.0.0.0 --port 8019
+    ports:
+      - "8019:8019"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src
+      - BECKN_GATEWAY_URL=http://gateway:9000
+      - AGENT_ID=household-agent-10
+      - AGENT_PORT=8019
+      - AGENT_OWN_URL=http://household_agent_10:8019
+      - INITIAL_SOC=95 # Seller (High SoC)
+
+  reporter:
+    build: .
+    container_name: reporter
+    command: python src/reporting/reporter.py
+    volumes:
+      - ./src:/app/src
+      - ./reports:/app/reports # Mount local ./reports dir
+    environment:
+      - DOCKER_ENV=true
+      - PYTHONPATH=/app/src

@@ -1,0 +1,34 @@
+{
+    "protocolVersion": "0.2.9",
+    "name": "Household Agent",
+    "description": "An agent for a household that can trade energy and respond to grid commands.",
+    "url": "http://localhost:8001/a2a",
+    "preferredTransport": "JSONRPC",
+    "capabilities": {
+      "streaming": true,
+      "pushNotifications": false
+    },
+    "skills": [
+      {
+        "id": "get_soc_data",
+        "name": "Get SoC Data",
+        "description": "Returns the current state of charge and generation data.",
+        "parameters": {}
+      },
+      {
+        "id": "curtail_generation",
+        "name": "Curtail Generation",
+        "description": "Reduces or stops energy generation based on grid requirements."
+      },
+      {
+        "id": "sell_surplus_energy",
+        "name": "Sell Surplus Energy",
+        "description": "Acts as a BPP to sell surplus energy. Initiates a UEI transaction to offer energy to the network."
+      },
+      {
+        "id": "request_grid_power",
+        "name": "Request Grid Power",
+        "description": "Acts as a BAP to purchase power from the grid. Initiates a UEI search for grid power."
+      }
+    ]
+  }
